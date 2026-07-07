@@ -20,7 +20,7 @@ const userSchema = new Schema(
     },
     provider: {
       type: String,
-      enum: ["google", "github"],
+      enum: ["google"],
       required: true
     }
   },

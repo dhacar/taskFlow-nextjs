@@ -15,11 +15,6 @@ async function signInWithGoogle() {
   await signIn("google", { redirectTo: "/dashboard" });
 }
 
-async function signInWithGitHub() {
-  "use server";
-  await signIn("github", { redirectTo: "/dashboard" });
-}
-
 export default async function SignInPage() {
   const session = await auth();
 
@@ -35,17 +30,12 @@ export default async function SignInPage() {
             <CheckCircle2 className="size-6" />
           </Link>
           <CardTitle className="text-2xl">Sign in to TaskFlow</CardTitle>
-          <CardDescription>Use Google or GitHub to access your private task dashboard.</CardDescription>
+          <CardDescription>Use Google to access your private task dashboard.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3">
           <form action={signInWithGoogle}>
             <Button className="w-full" variant="outline" type="submit">
               Continue with Google
-            </Button>
-          </form>
-          <form action={signInWithGitHub}>
-            <Button className="w-full" variant="outline" type="submit">
-              Continue with GitHub
             </Button>
           </form>
         </CardContent>

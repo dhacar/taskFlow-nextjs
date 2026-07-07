@@ -50,7 +50,7 @@ export function UserMenu({ user }: UserMenuProps) {
         <DropdownMenuSeparator />
         <DropdownMenuItem className="gap-2">
           <UserRound className="size-4" />
-          {user.provider === "github" ? "GitHub account" : "Google account"}
+          Google account
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem className="gap-2 text-destructive" onClick={() => signOut({ callbackUrl: "/" })}>

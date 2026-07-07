@@ -3,16 +3,11 @@ import { authConfig } from "@/auth.config";
 import { connectToDatabase } from "@/lib/db";
 import { User } from "@/lib/models/user";
 
-function getProvider(provider?: string) {
-  return provider === "github" ? "github" : "google";
-}
-
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
   callbacks: {
-    ...authConfig.callbacks,
     async signIn({ account, profile }) {
-      if (!profile?.email || !account?.provider) {
+      if (!profile?.email || account?.provider !== "google") {
         return false;
       }
 
@@ -25,7 +20,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             name: profile.name || profile.email.split("@")[0],
             email: profile.email.toLowerCase(),
             image: typeof profile.image === "string" ? profile.image : "",
-            provider: getProvider(account.provider)
+            provider: "google"
           }
         },
         { new: true, upsert: true }
@@ -38,7 +33,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         await connectToDatabase();
         const user = await User.findOne({ email: profile.email.toLowerCase() }).select("_id provider").lean<{
           _id: { toString: () => string };
-          provider: "google" | "github";
+          provider: "google";
         } | null>();
 
         if (user) {
@@ -48,7 +43,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
 
       if (account?.provider) {
-        token.provider = getProvider(account.provider);
+        token.provider = "google";
       }
 
       return token;
@@ -56,7 +51,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         session.user.id = typeof token.id === "string" ? token.id : "";
-        session.user.provider = token.provider === "github" ? "github" : "google";
+        session.user.provider = "google";
       }
 
       return session;
