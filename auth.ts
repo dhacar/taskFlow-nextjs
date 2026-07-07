@@ -7,38 +7,51 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
   callbacks: {
     async signIn({ account, profile }) {
-      if (!profile?.email || account?.provider !== "google") {
-        return false;
+      if (account?.provider !== "google") {
+        return "/auth/signin?error=InvalidProvider";
       }
 
-      await connectToDatabase();
+      if (!profile?.email) {
+        return "/auth/signin?error=MissingGoogleEmail";
+      }
 
-      await User.findOneAndUpdate(
-        { email: profile.email.toLowerCase() },
-        {
-          $set: {
-            name: profile.name || profile.email.split("@")[0],
-            email: profile.email.toLowerCase(),
-            image: typeof profile.image === "string" ? profile.image : "",
-            provider: "google"
-          }
-        },
-        { new: true, upsert: true }
-      );
+      try {
+        await connectToDatabase();
+
+        await User.findOneAndUpdate(
+          { email: profile.email.toLowerCase() },
+          {
+            $set: {
+              name: profile.name || profile.email.split("@")[0],
+              email: profile.email.toLowerCase(),
+              image: typeof profile.image === "string" ? profile.image : "",
+              provider: "google"
+            }
+          },
+          { new: true, upsert: true, runValidators: true }
+        );
+      } catch (error) {
+        console.error("GOOGLE_SIGN_IN_USER_UPSERT_FAILED", error);
+        return "/auth/signin?error=DatabaseUnavailable";
+      }
 
       return true;
     },
     async jwt({ token, account, profile }) {
       if (profile?.email) {
-        await connectToDatabase();
-        const user = await User.findOne({ email: profile.email.toLowerCase() }).select("_id provider").lean<{
-          _id: { toString: () => string };
-          provider: "google";
-        } | null>();
+        try {
+          await connectToDatabase();
+          const user = await User.findOne({ email: profile.email.toLowerCase() }).select("_id provider").lean<{
+            _id: { toString: () => string };
+            provider: "google";
+          } | null>();
 
-        if (user) {
-          token.id = user._id.toString();
-          token.provider = user.provider;
+          if (user) {
+            token.id = user._id.toString();
+            token.provider = user.provider;
+          }
+        } catch (error) {
+          console.error("GOOGLE_JWT_USER_LOOKUP_FAILED", error);
         }
       }
 

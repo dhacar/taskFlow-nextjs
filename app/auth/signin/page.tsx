@@ -10,13 +10,31 @@ export const metadata: Metadata = {
   title: "Sign in"
 };
 
+const errorMessages: Record<string, string> = {
+  AccessDenied: "The sign-in callback was denied. Check the latest Vercel function logs for the exact reason.",
+  CallbackRouteError: "Google returned to the app, but the callback failed. Check OAuth URLs and server logs.",
+  Configuration: "Authentication is missing or using invalid environment variables.",
+  DatabaseUnavailable: "Google sign-in worked, but TaskFlow could not reach MongoDB to create your user.",
+  InvalidProvider: "This app only allows Google sign-in.",
+  MissingGoogleEmail: "Google did not send an email address. Make sure the OAuth consent screen includes email/profile scopes."
+};
+
 async function signInWithGoogle() {
   "use server";
   await signIn("google", { redirectTo: "/dashboard" });
 }
 
-export default async function SignInPage() {
+type SignInPageProps = {
+  searchParams?: Promise<{
+    error?: string;
+  }>;
+};
+
+export default async function SignInPage({ searchParams }: SignInPageProps) {
   const session = await auth();
+  const params = await searchParams;
+  const error = params?.error;
+  const errorMessage = error ? errorMessages[error] || `Authentication failed: ${error}` : null;
 
   if (session?.user) {
     redirect("/dashboard");
@@ -33,6 +51,11 @@ export default async function SignInPage() {
           <CardDescription>Use Google to access your private task dashboard.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3">
+          {errorMessage ? (
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {errorMessage}
+            </div>
+          ) : null}
           <form action={signInWithGoogle}>
             <Button className="w-full" variant="outline" type="submit">
               Continue with Google

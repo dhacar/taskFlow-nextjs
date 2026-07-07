@@ -6,8 +6,14 @@ export const authConfig = {
   session: {
     strategy: "jwt"
   },
-  providers: [Google],
+  providers: [
+    Google({
+      clientId: process.env.AUTH_GOOGLE_ID ?? "",
+      clientSecret: process.env.AUTH_GOOGLE_SECRET ?? ""
+    })
+  ],
   pages: {
-    signIn: "/auth/signin"
+    signIn: "/auth/signin",
+    error: "/auth/signin"
   }
 } satisfies NextAuthConfig;
